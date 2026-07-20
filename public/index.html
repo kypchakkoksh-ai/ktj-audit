@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KTJ Audit — Аудит ТС и ТД</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --border-color: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); padding: 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 1100px; display: flex; flex-direction: column; gap: 20px; }
+        
+        header { border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
+        h1 { color: #60a5fa; font-size: 24px; }
+        .subtitle { color: var(--text-muted); font-size: 14px; }
+
+        .card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #cbd5e1; }
+        input[type="text"], input[type="password"], input[type="file"] {
+            width: 100%; padding: 10px; background-color: #0f172a; border: 1px solid var(--border-color);
+            border-radius: 6px; color: var(--text-main); font-size: 13px;
+        }
+
+        .btn { padding: 12px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+        .btn-secondary { background-color: #475569; color: white; }
+
+        .checklist-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .checklist-table th, .checklist-table td { padding: 12px; border: 1px solid var(--border-color); text-align: left; font-size: 13px; }
+        .checklist-table th { background-color: #0f172a; color: #94a3b8; }
+
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; display: inline-block; }
+        .badge-passed { background-color: #166534; color: #4ade80; }
+        .badge-failed { background-color: #991b1b; color: #fca5a5; }
+        .badge-skipped { background-color: #475569; color: #cbd5e1; }
+
+        .recommendation { background: #0f172a; padding: 8px; border-left: 3px solid var(--warning); margin-top: 5px; font-size: 12px; }
+
+        .manual-checklist { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .manual-item { background: #0f172a; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); display: flex; gap: 10px; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Аудит ТС и ТД АО «НК «ҚТЖ»</h1>
+        <p class="subtitle">Онлайн-система проверки закупочной документации</p>
+    </header>
+
+    <!-- 1. Ключи и доступы -->
+    <div class="card">
+        <h3>1. Настройка доступов и ключей</h3>
+        <div class="grid-2" style="margin-top: 10px;">
+            <div class="form-group">
+                <label>🔑 Gemini API Key *</label>
+                <input type="password" id="keyGemini" placeholder="AIzaSy...">
+            </div>
+            <div class="form-group">
+                <label>🔐 Доступ PRG.kz (Ключ/Токен)</label>
+                <input type="password" id="keyPrg" placeholder="Вставьте токен доступа">
+            </div>
+            <div class="form-group">
+                <label>🌐 Доступ ENSTRU.kz (API Key)</label>
+                <input type="password" id="keyEnstru" placeholder="Ключ ЕНС ТРУ">
+            </div>
+            <div class="form-group">
+                <label>📂 Постоянный доступ к Правилам КТЖ (Google Drive)</label>
+                <input type="text" id="gdKtjRules" value="Подключено из хранилища КТЖ" readonly>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Загрузка документов -->
+    <div class="card">
+        <h3>2. Загрузка документов для аудит-проверки</h3>
+        <div class="grid-2" style="margin-top: 10px;">
+            <div class="form-group">
+                <label>2.1. План закупок (.txt, .csv)</label>
+                <input type="file" id="filePlan">
+            </div>
+            <div class="form-group">
+                <label>2.2. Техспецификация (РУС) *</label>
+                <input type="file" id="fileTechRu">
+            </div>
+            <div class="form-group">
+                <label>2.3. Техспецификация (КАЗ)</label>
+                <input type="file" id="fileTechKz">
+            </div>
+            <div class="form-group">
+                <label>2.4. Требования к потенциальному поставщику (ПП)</label>
+                <input type="file" id="fileSupplier">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>2.5. Дополнительные документы (НПА, СТ АО, ГОСТы)</label>
+            <input type="file" id="fileExtra" multiple>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button class="btn btn-secondary" onclick="runPreCheck()">4. Предварительная проверка (Поиск ссылок)</button>
+            <button class="btn btn-primary" onclick="runFullAudit()">5. Запустить аудит по Чек-листу</button>
+        </div>
+    </div>
+
+    <!-- 4. Результат предварительной проверки -->
+    <div class="card" id="preCheckCard" style="display: none;">
+        <h3>4. Предварительная проверка наличия ссылок и НПА</h3>
+        <div id="preCheckContent" style="white-space: pre-wrap; margin-top: 10px; font-size: 13px; color: #93c5fd;"></div>
+    </div>
+
+    <!-- 6. Чек-лист проверки -->
+    <div class="card" id="auditCard" style="display: none;">
+        <h3>6. Результаты аудита по Чек-листу</h3>
+        <table class="checklist-table">
+            <thead>
+                <tr>
+                    <th style="width: 80px;">Пункт</th>
+                    <th>Наименование проверки</th>
+                    <th style="width: 130px;">Статус</th>
+                    <th>Замечания и рекомендуемая редакция</th>
+                </tr>
+            </thead>
+            <tbody id="checklistBody"></tbody>
+        </table>
+    </div>
+
+    <!-- 6.16. Чек-лист согласований -->
+    <div class="card">
+        <h3>6.16. Чек-лист самостоятельного контроля согласований</h3>
+        <div class="manual-checklist">
+            <div class="manual-item">
+                <input type="checkbox" id="chkGvc">
+                <label for="chkGvc"><b>ГВЦ:</b> Согласование IT, связи и вычислительной техники на соответствие СТ РК/ГОСТ/ISO.</label>
+            </div>
+            <div class="manual-item">
+                <input type="checkbox" id="chkCdac">
+                <label for="chkCdac"><b>ЦДАЦ:</b> Автоматизация и цифровизация на соответствие Архитектуре АО «НК «ҚТЖ».</label>
+            </div>
+            <div class="manual-item">
+                <input type="checkbox" id="chkCtech">
+                <label for="chkCtech"><b>Цтех:</b> Подвижной состав, ремонт, модернизация и ЗКС.</label>
+            </div>
+            <div class="manual-item">
+                <input type="checkbox" id="chkCtb">
+                <label for="chkCtb"><b>ЦТБ:</b> Спецодежда, СИЗ и охрана труда.</label>
+            </div>
+            <div class="manual-item">
+                <input type="checkbox" id="chkCkuz">
+                <label for="chkCkuz"><b>ЦКУЗ:</b> Категорийные закупки и Закупочная категорийная стратегия (ЗКС).</label>
+            </div>
+            <div class="manual-item">
+                <input type="checkbox" id="chkCzapas">
+                <label for="chkCzapas"><b>Цзапас:</b> Отсутствие остатков на складах и ожидаемых поставок.</label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem('gemini_key')) document.getElementById('keyGemini').value = localStorage.getItem('gemini_key');
+    if (localStorage.getItem('prg_key')) document.getElementById('keyPrg').value = localStorage.getItem('prg_key');
+    if (localStorage.getItem('enstru_key')) document.getElementById('keyEnstru').value = localStorage.getItem('enstru_key');
+});
+
+function saveKeys() {
+    localStorage.setItem('gemini_key', document.getElementById('keyGemini').value.trim());
+    localStorage.setItem('prg_key', document.getElementById('keyPrg').value.trim());
+    localStorage.setItem('enstru_key', document.getElementById('keyEnstru').value.trim());
+}
+
+function readFile(file) {
+    return new Promise((resolve) => {
+        if (!file) resolve('');
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.readAsText(file);
+    });
+}
+
+async function getUploadedDocs() {
+    return {
+        plan: await readFile(document.getElementById('filePlan').files[0]),
+        techRu: await readFile(document.getElementById('fileTechRu').files[0]),
+        techKz: await readFile(document.getElementById('fileTechKz').files[0]),
+        supplier: await readFile(document.getElementById('fileSupplier').files[0]),
+        extra: await readFile(document.getElementById('fileExtra').files[0]),
+    };
+}
+
+async function runPreCheck() {
+    saveKeys();
+    const apiKey = document.getElementById('keyGemini').value;
+    if (!apiKey) return alert('Введите API ключ Gemini!');
+
+    const docs = await getUploadedDocs();
+    document.getElementById('preCheckCard').style.display = 'block';
+    document.getElementById('preCheckContent').textContent = '⏳ Выполняется предварительный анализ ссылок...';
+
+    try {
+        const res = await fetch('/api/pre-check', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ apiKey, docs })
+        });
+        const data = await res.json();
+        document.getElementById('preCheckContent').textContent = data.result || data.error;
+    } catch (err) {
+        document.getElementById('preCheckContent').textContent = 'Ошибка подключения к серверу.';
+    }
+}
+
+async function runFullAudit() {
+    saveKeys();
+    const apiKey = document.getElementById('keyGemini').value;
+    if (!apiKey) return alert('Введите API ключ Gemini!');
+
+    const docs = await getUploadedDocs();
+    const auditCard = document.getElementById('auditCard');
+    const tbody = document.getElementById('checklistBody');
+    
+    auditCard.style.display = 'block';
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">⏳ Идет проверка по чек-листу (6.1 - 6.15)...</td></tr>';
+
+    try {
+        const res = await fetch('/api/full-audit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                apiKey,
+                prgKey: document.getElementById('keyPrg').value,
+                enstruKey: document.getElementById('keyEnstru').value,
+                docs
+            })
+        });
+
+        const items = await res.json();
+        tbody.innerHTML = '';
+
+        if (Array.isArray(items)) {
+            items.forEach(item => {
+                let badgeClass = 'badge-skipped';
+                let statusText = 'ПРОПУЩЕНО';
+                if (item.status === 'PASSED') { badgeClass = 'badge-passed'; statusText = 'СООТВЕТСТВУЕТ'; }
+                if (item.status === 'FAILED') { badgeClass = 'badge-failed'; statusText = 'НАРУШЕНИЕ'; }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><b>${item.id}</b></td>
+                    <td>${item.title}</td>
+                    <td><span class="badge ${badgeClass}">${statusText}</span></td>
+                    <td>
+                        ${item.comment || ''}
+                        ${item.recommendation ? `<div class="recommendation"><b>Рекомендуемая редакция:</b> ${item.recommendation}</div>` : ''}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } else {
+            tbody.innerHTML = `<tr><td colspan="4" style="color:red;">Ошибка анализа: ${JSON.stringify(items)}</td></tr>`;
+        }
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="4" style="color:red;">Ошибка связи с бэкендом.</td></tr>`;
+    }
+}
+</script>
+
+</body>
+</html>
