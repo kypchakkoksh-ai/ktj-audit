@@ -15,7 +15,8 @@ app.post('/api/pre-check', async (req, res) => {
     const { apiKey, docs } = req.body;
     if (!apiKey) return res.status(400).json({ error: 'Не указан API-ключ Gemini' });
 
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenerativeAI(apiKey);
+    const model = ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     const prompt = `
 Ты — предварительный аудитор документов закупок АО «НК «КТЖ».
@@ -30,11 +31,8 @@ ${JSON.stringify(docs)}
     `;
 
     try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-        });
-        res.json({ result: response.text });
+        const response = await model.generateContent(prompt);
+        res.json({ result: response.response.text() });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
@@ -44,7 +42,11 @@ app.post('/api/full-audit', async (req, res) => {
     const { apiKey, docs, ktjRulesText } = req.body;
     if (!apiKey) return res.status(400).json({ error: 'Не указан API-ключ Gemini' });
 
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenerativeAI(apiKey);
+    const model = ai.getGenerativeModel({ 
+        model: 'gemini-1.5-pro',
+        generationConfig: { responseMimeType: "application/json" }
+    });
 
     const systemPrompt = `
 Ты — главный эксперт по аудиту закупочной документации АО «НК «КТЖ», Порядка закупок АО «Самрук-Қазына», Закона о квазигосзакупках и законодательства РК.
@@ -78,12 +80,8 @@ app.post('/api/full-audit', async (req, res) => {
     `;
 
     try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-pro',
-            contents: systemPrompt,
-            config: { responseMimeType: "application/json" }
-        });
-        res.json(JSON.parse(response.text));
+        const response = await model.generateContent(systemPrompt);
+        res.json(JSON.parse(response.response.text()));
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
