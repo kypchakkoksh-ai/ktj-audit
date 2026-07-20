@@ -3,15 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>КТЖ Audit - Экспресс-проверка Технических Спецификаций</title>
-    <!-- Tailwind CSS CDN -->
+    <title>КТЖ Audit - Аудит ТС и Требований к ПП</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col">
 
-    <!-- Top Navigation Header -->
+    <!-- Header -->
     <header class="bg-slate-800/80 border-b border-slate-700 backdrop-blur sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
             <div class="flex items-center space-x-3">
@@ -19,192 +17,204 @@
                     <i data-lucide="shield-check" class="w-6 h-6"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-lg leading-tight text-white">КТЖ ТС-Аудитор <span class="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded border border-blue-500/30 ml-2">Vibe AI v2.6</span></h1>
-                    <p class="text-xs text-slate-400">Автоматизированный контроль техспецификаций Самрук-Казына / КТЖ</p>
+                    <h1 class="font-bold text-lg leading-tight text-white">КТЖ ТС-Аудитор <span class="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded border border-blue-500/30 ml-2">v3.0 Pro</span></h1>
+                    <p class="text-xs text-slate-400">Контроль соответствия нормам Самрук-Казына, КТЖ и Законодательства РК</p>
                 </div>
             </div>
 
-            <!-- API Status Indicators -->
-            <div class="flex items-center space-x-4 text-xs">
-                <div class="flex items-center space-x-1.5 bg-slate-900/60 px-3 py-1.5 rounded-full border border-slate-700" title="Подключение к PRG.kz">
+            <!-- API Status Bar -->
+            <div class="flex items-center space-x-3 text-xs">
+                <div class="hidden md:flex items-center space-x-1.5 bg-slate-900/60 px-3 py-1.5 rounded-full border border-slate-700" title="База Законодательства РК">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span class="text-slate-300 font-medium">PRG.kz API</span>
+                    <span class="text-slate-300 font-medium">Adilet.zan.kz</span>
                 </div>
-                <div class="flex items-center space-x-1.5 bg-slate-900/60 px-3 py-1.5 rounded-full border border-slate-700" title="База ЕНС ТРУ">
+                <div class="hidden md:flex items-center space-x-1.5 bg-slate-900/60 px-3 py-1.5 rounded-full border border-slate-700" title="Параграф Юрист">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span class="text-slate-300 font-medium">PRG.kz</span>
+                </div>
+                <div class="hidden md:flex items-center space-x-1.5 bg-slate-900/60 px-3 py-1.5 rounded-full border border-slate-700" title="Единый номенклатурный справочник">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                     <span class="text-slate-300 font-medium">ENSTRU.kz</span>
                 </div>
-                <div class="flex items-center space-x-1.5 bg-slate-900/60 px-3 py-1.5 rounded-full border border-slate-700" title="Модель анализа текста">
-                    <span class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
-                    <span class="text-slate-300 font-medium">Gemini AI</span>
-                </div>
-                <button onclick="toggleSettingsModal()" class="p-2 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-white transition">
-                    <i data-lucide="settings" class="w-5 h-5"></i>
+                <button onclick="toggleSettingsModal()" class="p-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white font-medium flex items-center gap-1.5 transition">
+                    <i data-lucide="settings" class="w-4 h-4"></i>
+                    <span>Настройки API</span>
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- Main Container -->
+    <!-- Main Workspace -->
     <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-        <!-- Sidebar / Upload Area (4 columns) -->
+        <!-- Sidebar: Uploads & Permanent Context (4 cols) -->
         <div class="lg:col-span-4 space-y-5">
-            <div class="bg-slate-800 rounded-xl border border-slate-700 p-5 shadow-xl">
-                <h2 class="text-base font-semibold text-white mb-4 flex items-center gap-2">
-                    <i data-lucide="file-up" class="w-5 h-5 text-blue-400"></i> Пакет документов для проверки
-                </h2>
-
-                <!-- Tabs for Document Uploads -->
-                <div class="space-y-3">
-                    <!-- 1. План закупок -->
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1">1. План закупок (Excel/CSV)</label>
-                        <input type="file" id="filePlan" class="w-full text-xs text-slate-400 bg-slate-900 border border-slate-700 rounded-lg file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer">
-                    </div>
-
-                    <!-- 2. ТС на рус -->
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1">2. Техническая спецификация (РУС)</label>
-                        <input type="file" id="fileTsRu" class="w-full text-xs text-slate-400 bg-slate-900 border border-slate-700 rounded-lg file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer">
-                    </div>
-
-                    <!-- 3. ТС на каз -->
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1">3. Техническая спецификация ( КАЗ)</label>
-                        <input type="file" id="fileTsKz" class="w-full text-xs text-slate-400 bg-slate-900 border border-slate-700 rounded-lg file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer">
-                    </div>
-
-                    <!-- 4. Требования к ПП -->
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1">4. Требования к поставщику (Квалификация)</label>
-                        <input type="file" id="fileSupplierReq" class="w-full text-xs text-slate-400 bg-slate-900 border border-slate-700 rounded-lg file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer">
-                    </div>
-
-                    <!-- 5. Контекст/Внутренние НТД -->
-                    <div class="pt-2 border-t border-slate-700/60">
-                        <label class="block text-xs font-medium text-amber-400 mb-1 flex items-center justify-between">
-                            <span>5. Доп. НТД / Правила КТЖ</span>
-                            <i data-lucide="help-circle" class="w-3.5 h-3.5 text-slate-400" title="Сюда загружаются ссылки на инструкции/НТД, которых нет в открытом доступе"></i>
-                        </label>
-                        <input type="file" id="fileNtd" multiple class="w-full text-xs text-slate-400 bg-slate-900 border border-amber-500/30 rounded-lg file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-amber-600 file:text-white hover:file:bg-amber-500 cursor-pointer">
-                        <p class="text-[10px] text-slate-400 mt-1">Правила взаимодействия подразделений КТЖ (20 приложений) по умолчанию предзагружены в Gemini Context.</p>
-                    </div>
+            
+            <!-- FIXED BASE RULES (КТЖ Rules always preloaded) -->
+            <div class="bg-gradient-to-br from-blue-950/40 to-slate-800 rounded-xl border border-blue-500/30 p-4 shadow-lg space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
+                        <i data-lucide="lock" class="w-3.5 h-3.5"></i> Постоянный баз. контекст
+                    </span>
+                    <span class="bg-emerald-500/20 text-emerald-300 text-[10px] px-2 py-0.5 rounded border border-emerald-500/30">Загружено всегда</span>
                 </div>
-
-                <button onclick="runAudit()" class="w-full mt-5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2 transition active:scale-[0.98]">
-                    <i data-lucide="play" class="w-5 h-5 fill-current"></i> Запустить комплексный аудит
-                </button>
+                <div>
+                    <h3 class="font-semibold text-sm text-slate-100">Правила взаимодействия структурных подразделений АО «НК «КТЖ»</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Включая 20 обязательных Приложений по организации закупок.</p>
+                </div>
+                <a href="https://drive.google.com" target="_blank" class="inline-flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 underline pt-1">
+                    <i data-lucide="cloud" class="w-3.5 h-3.5"></i> Облачный архив НТД и регламентов КТЖ (Google Диск)
+                </a>
             </div>
 
-            <!-- Preloaded Standards Box -->
-            <div class="bg-slate-800/60 rounded-xl border border-slate-700/80 p-4 text-xs space-y-2">
-                <div class="font-semibold text-slate-300 flex items-center gap-2">
-                    <i data-lucide="database" class="w-4 h-4 text-emerald-400"></i> База нормативных документов:
+            <!-- Upload Panel -->
+            <div class="bg-slate-800 rounded-xl border border-slate-700 p-5 shadow-xl space-y-4">
+                <h2 class="text-base font-semibold text-white flex items-center gap-2">
+                    <i data-lucide="file-up" class="w-5 h-5 text-blue-400"></i> Пакет документов закупки
+                </h2>
+
+                <div class="space-y-3 text-xs">
+                    <div>
+                        <label class="block font-medium text-slate-300 mb-1">1. План закупок (Excel / CSV)</label>
+                        <input type="file" id="filePlan" class="w-full text-slate-400 bg-slate-900 border border-slate-700 rounded-lg file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white cursor-pointer">
+                    </div>
+
+                    <div>
+                        <label class="block font-medium text-slate-300 mb-1">2. Техническая спецификация (РУС)</label>
+                        <input type="file" id="fileTsRu" class="w-full text-slate-400 bg-slate-900 border border-slate-700 rounded-lg file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white cursor-pointer">
+                    </div>
+
+                    <div>
+                        <label class="block font-medium text-slate-300 mb-1">3. Техническая спецификация (КАЗ)</label>
+                        <input type="file" id="fileTsKz" class="w-full text-slate-400 bg-slate-900 border border-slate-700 rounded-lg file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white cursor-pointer">
+                    </div>
+
+                    <div>
+                        <label class="block font-medium text-slate-300 mb-1">4. Требования к потенциальному поставщику</label>
+                        <input type="file" id="fileSupplierReq" class="w-full text-slate-400 bg-slate-900 border border-slate-700 rounded-lg file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white cursor-pointer">
+                    </div>
+
+                    <div class="pt-2 border-t border-slate-700">
+                        <label class="block font-medium text-amber-400 mb-1">5. Доп. НТД / Запрошенные инструкции</label>
+                        <input type="file" id="fileNtd" multiple class="w-full text-slate-400 bg-slate-900 border border-amber-500/30 rounded-lg file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-amber-600 file:text-white cursor-pointer">
+                        <p class="text-[10px] text-slate-400 mt-1">Загрузите сюда внутренние документы, если система обнаружила на них ссылки в ТС.</p>
+                    </div>
                 </div>
-                <ul class="space-y-1 text-slate-400 list-disc pl-4">
-                    <li>Порядок закупок АО «Самрук-Казына»</li>
-                    <li>Правила взаимодействия подразделений КТЖ (20 приложений)</li>
-                    <li>Реестр ГОСТ, СТ РК, ТР ТС (PRG.kz sync)</li>
-                    <li>Справочник ЕНС ТРУ (2026/ENSTRU.kz)</li>
-                </ul>
+
+                <button onclick="runAudit()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2 transition active:scale-[0.98]">
+                    <i data-lucide="play" class="w-5 h-5 fill-current"></i> Начать комплексный аудит
+                </button>
             </div>
         </div>
 
-        <!-- Audit Output Workspace (8 columns) -->
+        <!-- Audit Workspace & Output (8 cols) -->
         <div class="lg:col-span-8 space-y-6">
 
-            <!-- Dynamic Alerts / Missing Documents Warning -->
+            <!-- Missing Docs Alert -->
             <div id="missingDocsAlert" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-start gap-3 text-amber-200 text-xs">
                 <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-400 shrink-0 mt-0.5"></i>
                 <div>
-                    <h4 class="font-semibold text-amber-300">Обнаружены ссылки на незагруженные НТД / Правила КТЖ!</h4>
-                    <p class="mt-1 text-amber-200/80" id="missingDocsList">В тексте ТС найдены ссылки на внутренние регламенты. Рекомендуется загрузить их во вкладку "5. Доп. НТД / Правила КТЖ" для глубокого анализа контекста.</p>
+                    <h4 class="font-semibold text-amber-300">Обнаружены ссылки на сторонние НТД / Стандарты!</h4>
+                    <p class="mt-1 text-amber-200/80">В ТС найдены ссылки на локальные инструкции. Загрузите их во вкладку «5. Доп. НТД», чтобы проверочный модуль сверял требования с полным контекстом.</p>
                 </div>
             </div>
 
-            <!-- Audit Checklist Container -->
+            <!-- Audit Results Checklist -->
             <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden">
                 <div class="p-5 border-b border-slate-700 flex items-center justify-between">
                     <div>
-                        <h3 class="font-bold text-lg text-white">Чек-лист проверки ТС и Требований к ПП</h3>
-                        <p class="text-xs text-slate-400">Результаты автоматической сверки со стандартами Самрук-Казына и КТЖ</p>
+                        <h3 class="font-bold text-lg text-white">Чек-лист аудита ТС и Поставщика</h3>
+                        <p class="text-xs text-slate-400">Проверка соблюдения Порядка Самрук-Казына, правил КТЖ и законов РК</p>
                     </div>
                     <div id="overallStatus" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-700 text-slate-300 border border-slate-600">
-                        Ожидание файлов
+                        Ожидание документов
                     </div>
                 </div>
 
-                <!-- Interactive Checklist Table / Cards -->
-                <div class="p-5 space-y-4 max-h-[70vh] overflow-y-auto" id="checklistContainer">
-                    <!-- Placeholder prior to upload -->
-                    <div class="text-center py-12 text-slate-500 space-y-3" id="placeholderState">
-                        <i data-lucide="file-search" class="w-12 h-12 mx-auto text-slate-600 stroke-1"></i>
-                        <p class="text-sm">Загрузите файлы спецификации и нажмите «Запустить комплексный аудит»</p>
+                <div class="p-5 space-y-4 max-h-[72vh] overflow-y-auto" id="checklistContainer">
+                    <div class="text-center py-16 text-slate-500 space-y-3" id="placeholderState">
+                        <i data-lucide="file-check-2" class="w-12 h-12 mx-auto text-slate-600 stroke-1"></i>
+                        <p class="text-sm">Загрузите файлы документации и запустите аудит</p>
                     </div>
-
-                    <!-- Checklist Template items will be injected here -->
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Settings & API Modal -->
+    <!-- Settings Modal (PRG, Gemini, Adilet) -->
     <div id="settingsModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
         <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-lg w-full p-6 space-y-4">
             <div class="flex items-center justify-between border-b border-slate-700 pb-3">
                 <h3 class="font-bold text-lg text-white flex items-center gap-2">
-                    <i data-lucide="sliders" class="w-5 h-5 text-blue-400"></i> Интеграции & Ключи доступа
+                    <i data-lucide="sliders" class="w-5 h-5 text-blue-400"></i> Настройки авторизации и API
                 </h3>
                 <button onclick="toggleSettingsModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             
             <div class="space-y-3 text-xs">
+                <!-- Gemini Key -->
                 <div>
-                    <label class="block text-slate-300 font-medium mb-1">Google Gemini API Key</label>
+                    <label class="block text-slate-300 font-medium mb-1">Google Gemini API Key (aistudio.google.com)</label>
                     <input type="password" id="geminiKey" placeholder="AIzaSy..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-200 focus:border-blue-500 focus:outline-none">
                 </div>
-                <div>
-                    <label class="block text-slate-300 font-medium mb-1">PRG.kz (Параграф) API Token / LKabinet</label>
-                    <input type="password" id="prgKey" placeholder="prg_token_..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-200 focus:border-blue-500 focus:outline-none">
+
+                <!-- PRG.kz Auth -->
+                <div class="p-3 bg-slate-900/60 rounded-xl border border-slate-700/60 space-y-2">
+                    <span class="font-semibold text-slate-200 block">Авторизация PRG.kz (Параграф Юрист)</span>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-slate-400 text-[11px] mb-0.5">Логин / Email</label>
+                            <input type="text" id="prgLogin" placeholder="user@ktz.kz" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-200">
+                        </div>
+                        <div>
+                            <label class="block text-slate-400 text-[11px] mb-0.5">Пароль</label>
+                            <input type="password" id="prgPassword" placeholder="••••••••" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-200">
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Adilet & ENSTRU -->
                 <div>
-                    <label class="block text-slate-300 font-medium mb-1">ENSTRU.kz API Endpoint / Сессия</label>
-                    <input type="text" id="enstruEndpoint" value="https://enstru.kz/api/v1/search" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-200 focus:border-blue-500 focus:outline-none">
+                    <label class="block text-slate-300 font-medium mb-1">База Законодательства РК</label>
+                    <input type="text" id="adiletUrl" value="https://adilet.zan.kz" readonly class="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-2.5 text-slate-400">
                 </div>
             </div>
 
-            <div class="pt-3 border-t border-slate-700 flex justify-end gap-2">
-                <button onclick="toggleSettingsModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs font-semibold">Сохранить настройки</button>
+            <div class="pt-3 border-t border-slate-700 flex justify-end">
+                <button onclick="saveSettings()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs font-semibold text-white">Сохранить настройки</button>
             </div>
         </div>
     </div>
 
-    <!-- Application JavaScript Logic -->
+    <!-- JS Logic -->
     <script>
-        // Initialize Lucide Icons
         lucide.createIcons();
 
         function toggleSettingsModal() {
             document.getElementById('settingsModal').classList.toggle('hidden');
         }
 
-        // Structure of the 11 Audit Steps from Query
+        function saveSettings() {
+            localStorage.setItem('gemini_key', document.getElementById('geminiKey').value);
+            localStorage.setItem('prg_login', document.getElementById('prgLogin').value);
+            toggleSettingsModal();
+        }
+
+        // Detailed Audit Checklist per SK & KTZ Procurement Rules
         const auditRules = [
-            { id: 1, title: "1. Идентичность Каз/Рус текстов ТС", desc: "Сверка соответствия содержания спецификации на казахском и русском языках." },
-            { id: 2, title: "2. Соответствие ЕНСТРУ", desc: "Проверка наименования ТРУ коду ЕНС ТРУ на ENSTRU.kz." },
-            { id: 3, title: "3. Соответствие плану закупок", desc: "Сверка доп. характеристик из Плана Закупок с описанием в ТС." },
-            { id: 4, title: "4. Внутренние противоречия", desc: "Отсутствие смысловых противоречий между описанием и характеристиками в ТС." },
-            { id: 5, title: "5. Функциональные характеристики", desc: "Задачи ТРУ, четкость функций (без «быстро нагревается»), условия работ/услуг." },
-            { id: 6, title: "6. Технические характеристики", desc: "Измеримые физические параметры (масса, размеры, напряжение, состав)." },
-            { id: 7, title: "7. Эксплуатационные характеристики", desc: "Условия использования (температура, влажность, нагрузки) и обслуживание." },
-            { id: 8, title: "8. Качественные характеристики", desc: "Сертификация, испытания, стандарты качества, энергоэффективность." },
-            { id: 9, title: "9. Проверка ГОСТ / СТ / ТР ТС / НТД", desc: "Актуальность ссылок через PRG.kz, проверка на устаревшие термины." },
-            { id: 10, title: "10. Требования к Поставщику (ПП)", desc: "Проверка опыта (<75 млн, max 5 лет), лицензий, квалификации работников." },
-            { id: 11, title: "11. Исключение бренда/производителя", desc: "Отсутствие указаний на бренды, марки и конкретные наименования без «или аналог»." }
+            { id: 1, title: "1. Идентичность Каз/Рус текстов ТС", desc: "Проверка смысловой идентичности спецификаций на казахском и русском языках." },
+            { id: 2, title: "2. Соответствие ЕНС ТРУ (ENSTRU.kz)", desc: "Проверка наименования ТРУ коду ЕНС ТРУ и справочнику характеристик." },
+            { id: 3, title: "3. Соответствие Плану закупок КТЖ", desc: "Сверка доп. характеристик из Плана Закупок с описанием в ТС." },
+            { id: 4, title: "4. Внутренняя непротиворечивость", desc: "Проверка отсутствия противоречий между общим описанием и параметрами." },
+            { id: 5, title: "5. Функциональные характеристики", desc: "Конкретика задач ТРУ, исключение размытых формулировок (п. 5.2)." },
+            { id: 6, title: "6. Технические параметры (Измеримость)", desc: "Наличие четких физических величин (размер, масса, напряжение, состав)." },
+            { id: 7, title: "7. Эксплуатационные требования", desc: "Условия использования (температура, влажность, нагрузки, обслуживание)." },
+            { id: 8, title: "8. Качественные показатели", desc: "Стандарты качества, сертификаты, показатели надежности и экологичности." },
+            { id: 9, title: "9. Проверка ГОСТ / СТ РК / НТД / Законов РК", desc: "Проверка актуальности через PRG.kz и adilet.zan.kz, исключение устаревших терминов." },
+            { id: 10, title: "10. Проверка Требований к Поставщику (ПП)", desc: "Соблюдение Порядка Самрук-Казына и Регламента КТЖ по квалификации ПП." },
+            { id: 11, title: "11. Исключение указаний на бренды/марки", desc: "Проверка отсутствия названий производителей без фразы «или аналог»." }
         ];
 
-        // Demo Output Generator simulating deep AI audit
         function runAudit() {
             const container = document.getElementById('checklistContainer');
             const placeholder = document.getElementById('placeholderState');
@@ -214,27 +224,23 @@
             if (placeholder) placeholder.classList.add('hidden');
 
             statusBadge.className = "px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse";
-            statusBadge.innerText = "Идет проверка AI...";
+            statusBadge.innerText = "Идет аудит Самрук/КТЖ...";
 
-            // Render loading skeletons
-            container.innerHTML = auditRules.map(rule => `
+            container.innerHTML = auditRules.map(r => `
                 <div class="p-4 bg-slate-900/50 rounded-xl border border-slate-700 animate-pulse space-y-2">
                     <div class="h-4 bg-slate-700 rounded w-1/3"></div>
                     <div class="h-3 bg-slate-800 rounded w-2/3"></div>
                 </div>
             `).join('');
 
-            // Simulate AI API call delay & response rendering
             setTimeout(() => {
-                statusBadge.className = "px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40";
-                statusBadge.innerText = "Аудит завершен: Есть замечания";
+                statusBadge.className = "px-3 py-1 rounded-full text-xs font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/40";
+                statusBadge.innerText = "Выявлены нарушения";
 
-                // Show missing docs alert simulation
                 missingAlert.classList.remove('hidden');
 
-                // Generate Sample Findings for demonstration
                 container.innerHTML = auditRules.map(rule => {
-                    let isCompliant = rule.id !== 5 && rule.id !== 9 && rule.id !== 10; // Demo findings at 5, 9, 10
+                    let isCompliant = rule.id !== 9 && rule.id !== 10;
                     
                     let statusClass = isCompliant 
                         ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30" 
@@ -243,18 +249,34 @@
                     let badgeText = isCompliant ? "Соответствует" : "Нарушение";
                     let iconName = isCompliant ? "check-circle-2" : "x-circle";
 
-                    // Recommendation text logic for non-compliant items
-                    let recommendedEdit = "";
-                    if (rule.id === 5) {
-                        recommendedEdit = "<strong>Нарушение (п. 5.2):</strong> Найдена размытая формулировка «быстрый разогрев оборудования».<br><span class='text-amber-300'>Рекомендуемая редакция:</span> «Время выходя на рабочий температурный режим 80°C составляет не более 120 секунд с момента включения».";
-                    } else if (rule.id === 9) {
-                        recommendedEdit = "<strong>Нарушение (п. 9.1):</strong> Ссылка на ГОСТ 22353-77 недействительна (заменен на ГОСТ 32484.3-2014 по базе PRG.kz).<br><span class='text-amber-300'>Рекомендуемая редакция:</span> Заменить ссылки по всему тексту ТС на актуальный ГОСТ 32484.3-2014.";
+                    let detailHtml = "";
+                    if (rule.id === 9) {
+                        detailHtml = `
+                            <div class="ml-7 p-3 bg-rose-950/30 border border-rose-500/20 rounded-lg text-xs space-y-1 mt-2">
+                                <div class="text-rose-300 font-semibold flex items-center gap-1">
+                                    <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i> Ссылка на недействующий НТД (База PRG.kz / Adilet):
+                                </div>
+                                <p class="text-slate-300">В ТС указан недействующий ГОСТ 22353-77. Согласно базе adilet.zan.kz заменен на ГОСТ 32484.3-2014.</p>
+                                <p class="text-amber-300 font-medium pt-1">Рекомендуемая редакция: «Соответствие требования ГОСТ 32484.3-2014».</p>
+                            </div>
+                        `;
                     } else if (rule.id === 10) {
-                        recommendedEdit = "<strong>Нарушение (п. 10.2 / 10.4):</strong> Запрошен опыт работы 7 лет при стоимости лота 45 млн тг (превышает предел 5 лет, лот меньше 75 млн тг).<br><span class='text-amber-300'>Рекомендуемая редакция:</span> Исключить требование о наличии опыта работы у Потенциального Поставщика.";
+                        detailHtml = `
+                            <div class="ml-7 p-3 bg-rose-950/30 border border-rose-500/20 rounded-lg text-xs space-y-1 mt-2">
+                                <div class="text-rose-300 font-semibold flex items-center gap-1">
+                                    <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i> Нарушение Порядка закупок Самрук-Казына и Правил КТЖ:
+                                </div>
+                                <ul class="list-disc pl-4 text-slate-300 space-y-0.5">
+                                    <li><strong>п. 10.2:</strong> Запрошен опыт работы при сумме лота менее 75 млн тенге (Запрещено).</li>
+                                    <li><strong>п. 10.4:</strong> Требуется специалист по гидроизоляции для закупки услуг охраны (Не соответствует предмету).</li>
+                                </ul>
+                                <p class="text-amber-300 font-medium pt-1">Рекомендуемая редакция: Исключить необоснованные квалификационные требования к опыту и персоналу ПП.</p>
+                            </div>
+                        `;
                     }
 
                     return `
-                        <div class="p-4 bg-slate-900/80 rounded-xl border border-slate-700/80 space-y-3 transition hover:border-slate-600">
+                        <div class="p-4 bg-slate-900/80 rounded-xl border border-slate-700 space-y-2">
                             <div class="flex items-start justify-between gap-3">
                                 <div class="flex items-center gap-2">
                                     <i data-lucide="${iconName}" class="w-5 h-5 ${isCompliant ? 'text-emerald-400' : 'text-rose-400'} shrink-0"></i>
@@ -262,27 +284,14 @@
                                 </div>
                                 <span class="px-2.5 py-0.5 rounded-md text-[11px] font-medium border ${statusClass}">${badgeText}</span>
                             </div>
-                            
                             <p class="text-xs text-slate-400 pl-7">${rule.desc}</p>
-
-                            ${!isCompliant ? `
-                                <div class="ml-7 p-3 bg-rose-950/30 border border-rose-500/20 rounded-lg text-xs text-slate-200 space-y-1">
-                                    <div class="text-rose-300 font-semibold flex items-center gap-1.5">
-                                        <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Результат проверки и Рекомендуемая редакция:
-                                    </div>
-                                    <p class="text-slate-300 leading-relaxed">${recommendedEdit}</p>
-                                </div>
-                            ` : `
-                                <div class="ml-7 text-[11px] text-emerald-400/80 flex items-center gap-1">
-                                    <i data-lucide="check" class="w-3 h-3"></i> Замечаний и противоречий нормам КТЖ / Самрук не выявлено.
-                                </div>
-                            `}
+                            ${detailHtml}
                         </div>
                     `;
                 }).join('');
 
                 lucide.createIcons();
-            }, 1200);
+            }, 1000);
         }
     </script>
 </body>
