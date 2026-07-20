@@ -3,342 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KTJ Audit — Комплексный аудит ТС и ТД</title>
+    <title>Аудит ТС и ТД АО «НК «КТЖ»</title>
     <style>
-        :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --border-color: #334155;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --success: #22c55e;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 900px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        header {
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 15px;
-        }
-
-        h1 {
-            font-size: 24px;
-            color: #60a5fa;
-            margin-bottom: 5px;
-        }
-
-        p.subtitle {
-            font-size: 14px;
-            color: var(--text-muted);
-        }
-
-        .card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 20px;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 6px;
-            color: #cbd5e1;
-        }
-
-        input[type="text"], input[type="password"], input[type="file"] {
-            width: 100%;
-            padding: 10px;
-            background-color: #0f172a;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            color: var(--text-main);
-            font-size: 14px;
-        }
-
-        input[type="file"] {
-            padding: 6px;
-            cursor: pointer;
-        }
-
-        button.btn-submit {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        button.btn-submit:hover {
-            background-color: var(--primary-hover);
-        }
-
-        button.btn-submit:disabled {
-            background-color: #475569;
-            cursor: not-allowed;
-        }
-
-        .results-section {
-            display: none;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-
-        .status-skipped { background-color: #475569; color: #fff; }
-        .status-success { background-color: #166534; color: #4ade80; }
-        .status-warning { background-color: #854d0e; color: #fef08a; }
-
-        .result-content {
-            white-space: pre-wrap;
-            line-height: 1.6;
-            font-size: 14px;
-            background: #0f172a;
-            padding: 15px;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-        }
-
-        .loader {
-            display: none;
-            text-align: center;
-            padding: 20px;
-            color: #60a5fa;
-            font-weight: bold;
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a; color: #f8fafc; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: #1e293b; padding: 25px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        h1 { font-size: 22px; color: #38bdf8; border-bottom: 2px solid #334155; padding-bottom: 10px; }
+        .section { margin-bottom: 20px; background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #334155; }
+        .section-title { font-weight: bold; color: #94a3b8; margin-bottom: 10px; display: block; }
+        label { display: block; margin-top: 10px; font-size: 14px; color: #cbd5e1; }
+        input[type="text"], input[type="password"], textarea { width: 100%; padding: 10px; margin-top: 5px; background: #1e293b; border: 1px solid #475569; border-radius: 6px; color: #fff; box-sizing: border-box; }
+        .badge-open { display: inline-block; background: #059669; color: #fff; font-size: 12px; padding: 3px 8px; border-radius: 4px; margin-left: 8px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        button { background: #0284c7; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 15px; width: 100%; }
+        button:hover { background: #0369a1; }
+        .btn-secondary { background: #475569; }
+        .btn-secondary:hover { background: #334155; }
+        #output { margin-top: 20px; background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #334155; white-space: pre-wrap; word-break: break-word; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <header>
-        <h1>Модуль аудита ТС и ТД (KTJ Audit)</h1>
-        <p class="subtitle">Автоматизированная проверка закупочной документации на соответствие правилам АО «НК «КТЖ» и Порядку «Самрук-Казына»</p>
-    </header>
+    <h1>📋 Сервис аудита ТС и ТД АО «НК «КТЖ»</h1>
 
-    <div class="card">
-        <div class="form-group">
-            <label for="apiKeyInput">🔑 Ваш API-ключ Gemini:</label>
-            <input type="password" id="apiKeyInput" placeholder="Вставьте ваш AIzaSy... ключ">
-            <span style="font-size: 12px; color: var(--text-muted);">Ключ сохраняется локально в вашем браузере.</span>
-        </div>
-    </div>
-
-    <div class="card">
-        <h3 style="margin-bottom: 15px; font-size: 16px;">Загрузка документов для аудита</h3>
+    <!-- 1. Настройки ключей и доступов -->
+    <div class="section">
+        <span class="section-title">1. Настройка доступов и интеграций</span>
         
-        <div class="form-group">
-            <label for="fileTechRu">1. Техническая спецификация (Русский язык) *</label>
-            <input type="file" id="fileTechRu" accept=".txt,.html,.json,.csv">
-        </div>
+        <label>Gemini API Key:*</label>
+        <input type="password" id="geminiKey" placeholder="AIzaSy..." />
 
-        <div class="form-group">
-            <label for="fileTechKz">2. Техническая спецификация (Казахский язык)</label>
-            <input type="file" id="fileTechKz" accept=".txt,.html,.json,.csv">
+        <div class="grid-2">
+            <div>
+                <label>База EnSU <span class="badge-open">Открытый доступ</span></label>
+                <input type="text" value="API не требуется (прямой поиск)" disabled style="opacity: 0.6; cursor: not-allowed;" />
+            </div>
+            <div>
+                <label>Авторизация ПРГ (Параграф):</label>
+                <input type="text" id="prgLogin" placeholder="Логин (Email)" />
+                <input type="password" id="prgPassword" placeholder="Пароль" style="margin-top: 5px;" />
+            </div>
         </div>
-
-        <div class="form-group">
-            <label for="fileSupplierReq">3. Требования к потенциальному поставщику (ПП)</label>
-            <input type="file" id="fileSupplierReq" accept=".txt,.html,.json,.csv">
-        </div>
-
-        <button class="btn-submit" id="btnStart" onclick="runAudit()">Начать комплексный аудит</button>
     </div>
 
-    <div class="loader" id="loader">
-        ⏳ Выполняется анализ документации через Gemini API... Пожалуйста, подождите.
-    </div>
-
-    <div class="results-section" id="resultsSection">
+    <!-- 2. Загрузка документов -->
+    <div class="section">
+        <span class="section-title">2. Тексты документов для проверки</span>
         
-        <div class="card" id="cardSupplierResult">
-            <h3>Проверка требований к поставщику (ПП)</h3>
-            <div id="supplierBadge" class="status-badge status-skipped">⚪ Пропущено</div>
-            <div id="supplierResultText" class="result-content">Файл не загружен.</div>
-        </div>
+        <label>План закупок / Заявка:</label>
+        <textarea id="docPlan" rows="3" placeholder="Вставьте текст или выдержки из Плана..."></textarea>
 
-        <div class="card" id="cardTechResult">
-            <h3>Результаты анализа Технической спецификации</h3>
-            <div id="techBadge" class="status-badge status-success">✅ Анализ завершен</div>
-            <div id="techResultText" class="result-content">...</div>
-        </div>
+        <label>Техническая спецификация (РУС):</label>
+        <textarea id="docTechRu" rows="4" placeholder="Текст ТС на русском языке..."></textarea>
 
+        <label>Техническая спецификация (КАЗ):</label>
+        <textarea id="docTechKz" rows="4" placeholder="Текст ТС на казахском языке..."></textarea>
+
+        <label>Требования к Потенциальному Поставщику:</label>
+        <textarea id="docSupplier" rows="3" placeholder="Квалификационные требования..."></textarea>
     </div>
+
+    <!-- Действия -->
+    <div class="grid-2">
+        <button onclick="runPreCheck()" class="btn-secondary">🔍 Предварительная проверка (ГОСТ / СТ / ПРГ)</button>
+        <button onclick="runFullAudit()">⚡ Запустить полный аудит по Чек-листу</button>
+    </div>
+
+    <!-- Результат -->
+    <div id="output" style="display:none;"></div>
 </div>
 
 <script>
-// Сохранение и автоматическая подгрузка API-ключа
-document.addEventListener('DOMContentLoaded', () => {
-    const savedKey = localStorage.getItem('gemini_api_key');
-    if (savedKey) {
-        document.getElementById('apiKeyInput').value = savedKey;
-    }
-});
+    async function runPreCheck() {
+        const apiKey = document.getElementById('geminiKey').value;
+        if (!apiKey) return alert('Введите Gemini API Key!');
 
-document.getElementById('apiKeyInput').addEventListener('change', (e) => {
-    localStorage.setItem('gemini_api_key', e.target.value.trim());
-});
+        await savePrgConfig();
 
-// Чтение содержимого файла в виде текста
-function readFileAsText(file) {
-    return new Promise((resolve) => {
-        if (!file) resolve(null);
-        const reader = new FileReader();
-        reader.onload = (e) => resolve(e.target.result);
-        reader.onerror = () => resolve(null);
-        reader.readAsText(file);
-    });
-}
+        const docs = {
+            plan: document.getElementById('docPlan').value,
+            techRu: document.getElementById('docTechRu').value,
+            techKz: document.getElementById('docTechKz').value,
+            supplier: document.getElementById('docSupplier').value
+        };
 
-async function runAudit() {
-    const apiKey = document.getElementById('apiKeyInput').value.trim();
-    if (!apiKey) {
-        alert('Пожалуйста, укажите API-ключ Gemini!');
-        return;
-    }
-
-    const fileRu = document.getElementById('fileTechRu').files[0];
-    const fileKz = document.getElementById('fileTechKz').files[0];
-    const fileSupplier = document.getElementById('fileSupplierReq').files[0];
-
-    if (!fileRu && !fileKz && !fileSupplier) {
-        alert('Пожалуйста, прикрепите хотя бы один файл для проверки!');
-        return;
-    }
-
-    // Показываем лоадер и сбрасываем отображение
-    document.getElementById('loader').style.display = 'block';
-    document.getElementById('resultsSection').style.display = 'none';
-    document.getElementById('btnStart').disabled = true;
-
-    // Считываем тексты файлов
-    const textRu = await readFileAsText(fileRu);
-    const textKz = await readFileAsText(fileKz);
-    const textSupplier = await readFileAsText(fileSupplier);
-
-    // 1. Проверка файла "Требования к ПП"
-    const supplierBadge = document.getElementById('supplierBadge');
-    const supplierText = document.getElementById('supplierResultText');
-
-    if (!textSupplier) {
-        supplierBadge.className = 'status-badge status-skipped';
-        supplierBadge.textContent = '⚪ Файл не загружен';
-        supplierText.textContent = 'Файл требований к потенциальному поставщику не прикреплен. Проверка данного раздела пропущена.';
-    } else {
-        supplierBadge.className = 'status-badge status-warning';
-        supplierBadge.textContent = '🔍 Проверено';
-        supplierText.textContent = 'Файл получен. Выполняется анализ условий к поставщику...';
-    }
-
-    // 2. Отправка ТС в Gemini API (если загружен хотя бы один язык)
-    const techBadge = document.getElementById('techBadge');
-    const techText = document.getElementById('techResultText');
-
-    if (textRu || textKz || textSupplier) {
-        const prompt = `
-Ты — главный эксперт по аудиту закупочной документации АО «НК «КТЖ» и Порядка осуществлении закупок АО «Самрук-Қазына».
-Детально проанализируй представленные документы и выяви конкретные нарушения и несоответствия:
-
-КРИТЕРИИ ПРОВЕРКИ:
-1. Проверка ГОСТ / СТ РК / НТД / Законов РК (указание устаревших/недействующих стандартов).
-2. Исключение указаний на бренды/марки/модели/производителей (проверка отсутствия конкретных наименований без обязательной фразы «или эквивалент/аналог»).
-3. Детальная проверка технических характеристик (наличие уникальных, завышенных или дискриминационных параметров, ограничивающих конкуренцию).
-4. Двуязычие (если есть оба текста): расхождения в параметрах, цифрах или единицах измерения между РУС и КАЗ версиями.
-
-ТЕКСТ ТЕХСПЕЦИФИКАЦИИ (РУС):
-${textRu || 'Файл не загружен'}
-
-ТЕКСТ ТЕХСПЕЦИФИКАЦИИ (КАЗ):
-${textKz || 'Файл не загружен'}
-
-ТЕКСТ ТРЕБОВАНИЙ К ПОСТАВЩИКУ:
-${textSupplier || 'Файл не загружен'}
-
-Сформируй понятный, структурированный отчет с конкретными цитатами из документа, описанием выявленных нарушений и рекомендуемыми формулировками для исправления.
-        `;
+        showOutput('Выполняется анализ ссылок и стандартов EnSU/ПРГ...');
 
         try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+            const res = await fetch('/api/pre-check', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }]
-                })
+                body: JSON.stringify({ apiKey, docs })
             });
-
-            const data = await response.json();
-
-            if (data.error) {
-                techBadge.className = 'status-badge status-skipped';
-                techBadge.textContent = '❌ Ошибка API';
-                techText.textContent = `Ошибка Gemini API: ${data.error.message}`;
-            } else {
-                const aiResult = data.candidates[0].content.parts[0].text;
-                techBadge.className = 'status-badge status-success';
-                techBadge.textContent = '✅ Анализ завершен';
-                techText.textContent = aiResult;
-            }
-
-        } catch (err) {
-            techBadge.className = 'status-badge status-skipped';
-            techBadge.textContent = '❌ Ошибка сети';
-            techText.textContent = 'Не удалось получить ответ от сервера. Проверьте интернет-соединение и корректность API-ключа.';
-            console.error(err);
+            const data = await res.json();
+            showOutput(data.result || data.error);
+        } catch (e) {
+            showOutput('Ошибка: ' + e.message);
         }
-    } else {
-        techBadge.className = 'status-badge status-skipped';
-        techBadge.textContent = '⚪ Нет данных';
-        techText.textContent = 'Файлы техспецификации не прикреплены.';
     }
 
-    // Скрываем лоадер и показываем результаты
-    document.getElementById('loader').style.display = 'none';
-    document.getElementById('resultsSection').style.display = 'flex';
-    document.getElementById('btnStart').disabled = false;
-}
+    async function runFullAudit() {
+        const apiKey = document.getElementById('geminiKey').value;
+        if (!apiKey) return alert('Введите Gemini API Key!');
+
+        await savePrgConfig();
+
+        const docs = {
+            plan: document.getElementById('docPlan').value,
+            techRu: document.getElementById('docTechRu').value,
+            techKz: document.getElementById('docTechKz').value,
+            supplier: document.getElementById('docSupplier').value
+        };
+
+        showOutput('Запущен глубокий аудит по пунктам 6.1–6.15...');
+
+        try {
+            const res = await fetch('/api/full-audit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ apiKey, docs })
+            });
+            const data = await res.json();
+            showOutput(JSON.stringify(data, null, 2));
+        } catch (e) {
+            showOutput('Ошибка: ' + e.message);
+        }
+    }
+
+    async function savePrgConfig() {
+        const login = document.getElementById('prgLogin').value;
+        const password = document.getElementById('prgPassword').value;
+        if (login || password) {
+            await fetch('/api/config/prg', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ login, password })
+            });
+        }
+    }
+
+    function showOutput(text) {
+        const out = document.getElementById('output');
+        out.style.display = 'block';
+        out.textContent = text;
+    }
 </script>
 
 </body>
