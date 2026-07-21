@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="ru">
-<head><!-- Библиотеки для парсинга файлов прямо в браузере без нагрузки на Vercel -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Аудит ТС и ТД АО «НК «КТЖ»</title>
+    
+    <!-- Подключаем легкие библиотеки парсинга DOCX и XLSX прямо в браузере -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a; color: #f8fafc; margin: 0; padding: 20px; }
         .container { max-width: 900px; margin: 0 auto; background: #1e293b; padding: 25px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
@@ -13,7 +16,7 @@
         .section { margin-bottom: 20px; background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #334155; }
         .section-title { font-weight: bold; color: #94a3b8; margin-bottom: 10px; display: block; }
         label { display: block; margin-top: 10px; font-size: 14px; color: #cbd5e1; }
-        input[type="text"], input[type="password"], textarea { width: 100%; padding: 10px; margin-top: 5px; background: #1e293b; border: 1px solid #475569; border-radius: 6px; color: #fff; box-sizing: border-box; }
+        input[type="text"], input[type="password"], input[type="file"] { width: 100%; padding: 10px; margin-top: 5px; background: #1e293b; border: 1px solid #475569; border-radius: 6px; color: #fff; box-sizing: border-box; }
         .badge-open { display: inline-block; background: #059669; color: #fff; font-size: 12px; padding: 3px 8px; border-radius: 4px; margin-left: 8px; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         button { background: #0284c7; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 15px; width: 100%; }
@@ -21,6 +24,7 @@
         .btn-secondary { background: #475569; }
         .btn-secondary:hover { background: #334155; }
         #output { margin-top: 20px; background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #334155; white-space: pre-wrap; word-break: break-word; }
+        .status-loading { color: #fde047; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -28,9 +32,9 @@
 <div class="container">
     <h1>📋 Сервис аудита ТС и ТД АО «НК «КТЖ»</h1>
 
-    <!-- 1. Настройки ключей и доступов -->
+    <!-- 1. Настройки -->
     <div class="section">
-        <span class="section-title">1. Настройка доступов и интеграций</span>
+        <span class="section-title">1. Настройка доступов</span>
         
         <label>Gemini API Key:*</label>
         <input type="password" id="geminiKey" placeholder="AIzaSy..." />
@@ -48,21 +52,21 @@
         </div>
     </div>
 
-    <!-- 2. Загрузка документов -->
+    <!-- 2. Загрузка файлов -->
     <div class="section">
-        <span class="section-title">2. Тексты документов для проверки</span>
+        <span class="section-title">2. Загрузка документов (DOCX, XLSX, TXT)</span>
         
-        <label>План закупок / Заявка:</label>
-        <textarea id="docPlan" rows="3" placeholder="Вставьте текст или выдержки из Плана..."></textarea>
+        <label>План закупок (.xlsx, .csv, .txt):</label>
+        <input type="file" id="filePlan" accept=".xlsx, .xls, .csv, .txt" />
 
-        <label>Техническая спецификация (РУС):</label>
-        <textarea id="docTechRu" rows="4" placeholder="Текст ТС на русском языке..."></textarea>
+        <label>Техническая спецификация (РУС) (.docx, .txt):</label>
+        <input type="file" id="fileTechRu" accept=".docx, .txt" />
 
-        <label>Техническая спецификация (КАЗ):</label>
-        <textarea id="docTechKz" rows="4" placeholder="Текст ТС на казахском языке..."></textarea>
+        <label>Техническая спецификация (КАЗ) (.docx, .txt):</label>
+        <input type="file" id="fileTechKz" accept=".docx, .txt" />
 
-        <label>Требования к Потенциальному Поставщику:</label>
-        <textarea id="docSupplier" rows="3" placeholder="Квалификационные требования..."></textarea>
+        <label>Требования к Поставщику (.docx, .txt):</label>
+        <input type="file" id="fileSupplier" accept=".docx, .txt" />
     </div>
 
     <!-- Действия -->
@@ -76,22 +80,63 @@
 </div>
 
 <script>
+    // Универсальная функция извлечения текста прямо в браузере (Шаг 2)
+    async function extractTextFromFile(fileInput) {
+        if (!fileInput || !fileInput.files || !fileInput.files[0]) return '';
+        
+        const file = fileInput.files[0];
+        const fileName = file.name.toLowerCase();
+
+        // Обработка Word (.docx)
+        if (fileName.endsWith('.docx')) {
+            const arrayBuffer = await file.arrayBuffer();
+            const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+            return `\n--- ФАЙЛ: ${file.name} ---\n` + result.value;
+        }
+
+        // Обработка Excel (.xlsx, .xls)
+        if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+            const data = await file.arrayBuffer();
+            const workbook = XLSX.read(data, { type: 'array' });
+            let fullText = `\n--- ФАЙЛ: ${file.name} ---\n`;
+            workbook.SheetNames.forEach(sheetName => {
+                const worksheet = workbook.Sheets[sheetName];
+                const csv = XLSX.utils.sheet_to_csv(worksheet);
+                fullText += `[Лист: ${sheetName}]\n` + csv + '\n';
+            });
+            return fullText;
+        }
+
+        // Обработка обычного текста (.txt, .csv)
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(`\n--- ФАЙЛ: ${file.name} ---\n` + e.target.result);
+            reader.readAsText(file);
+        });
+    }
+
+    async function collectAllDocsText() {
+        const planText = await extractTextFromFile(document.getElementById('filePlan'));
+        const techRuText = await extractTextFromFile(document.getElementById('fileTechRu'));
+        const techKzText = await extractTextFromFile(document.getElementById('fileTechKz'));
+        const supplierText = await extractTextFromFile(document.getElementById('fileSupplier'));
+
+        return {
+            plan: planText,
+            techRu: techRuText,
+            techKz: techKzText,
+            supplier: supplierText
+        };
+    }
+
     async function runPreCheck() {
         const apiKey = document.getElementById('geminiKey').value;
         if (!apiKey) return alert('Введите Gemini API Key!');
 
-        await savePrgConfig();
-
-        const docs = {
-            plan: document.getElementById('docPlan').value,
-            techRu: document.getElementById('docTechRu').value,
-            techKz: document.getElementById('docTechKz').value,
-            supplier: document.getElementById('docSupplier').value
-        };
-
-        showOutput('Выполняется анализ ссылок и стандартов EnSU/ПРГ...');
+        showOutput('⏳ Извлечение текста из файлов в браузере и отправка на аудит...', true);
 
         try {
+            const docs = await collectAllDocsText();
             const res = await fetch('/api/pre-check', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -108,18 +153,10 @@
         const apiKey = document.getElementById('geminiKey').value;
         if (!apiKey) return alert('Введите Gemini API Key!');
 
-        await savePrgConfig();
-
-        const docs = {
-            plan: document.getElementById('docPlan').value,
-            techRu: document.getElementById('docTechRu').value,
-            techKz: document.getElementById('docTechKz').value,
-            supplier: document.getElementById('docSupplier').value
-        };
-
-        showOutput('Запущен глубокий аудит по пунктам 6.1–6.15...');
+        showOutput('⏳ Анализ документов по чек-листу КТЖ (6.1–6.15)...', true);
 
         try {
+            const docs = await collectAllDocsText();
             const res = await fetch('/api/full-audit', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -132,21 +169,10 @@
         }
     }
 
-    async function savePrgConfig() {
-        const login = document.getElementById('prgLogin').value;
-        const password = document.getElementById('prgPassword').value;
-        if (login || password) {
-            await fetch('/api/config/prg', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ login, password })
-            });
-        }
-    }
-
-    function showOutput(text) {
+    function showOutput(text, isLoading = false) {
         const out = document.getElementById('output');
         out.style.display = 'block';
+        out.className = isLoading ? 'status-loading' : '';
         out.textContent = text;
     }
 </script>
