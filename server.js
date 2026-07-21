@@ -1,25 +1,94 @@
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const path = require('path');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.use(cors());
+// Увеличиваем лимит размера передаваемых данных, чтобы не было ошибки 413
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
+
+let prgCredentials = {
+    login: process.env.PRG_LOGIN || '',
+    password: process.env.PRG_PASSWORD || ''
+};
+
+app.post('/api/config/prg', (req, res) => {
+    const { login, password } = req.body;
+    prgCredentials.login = login;
+    prgCredentials.password = password;
+    res.json({ status: 'ok', message: 'Данные авторизации ПРГ сохранены' });
+});
+
 app.post('/api/pre-check', async (req, res) => {
     try {
         const { apiKey, docs } = req.body;
-        if (!apiKey) {
-            return res.status(400).json({ error: 'Не указан API-ключ Gemini' });
-        }
+        if (!apiKey) return res.status(400).json({ error: 'Не указан API-ключ Gemini' });
 
         const ai = new GoogleGenerativeAI(apiKey);
         const model = ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
         const prompt = `
-Ты — аудитор документов закупок АО «НК «КТЖ».
-Проанализируй текст документов и найди ссылки на ГОСТы, СТ РК, ТР ТС и НПА.
+Ты — предварительный аудитор документов закупок АО «НК «КТЖ».
+Проанализируй текст документов и найди ВСЕ упоминания, ссылки и отсылки к:
+1. ГОСТам, СТ РК, ТР ТС, НТД (база EnSU - открытый доступ).
+2. Законам, Правилам, Регламентам, СТ АО «НК «КТЖ» (база ПРГ).
+
+ТЕКСТЫ ДОКУМЕНТОВ:
+${typeof docs === 'string' ? docs : JSON.stringify(docs)}
+        `;
+
+        const response = await model.generateContent(prompt);
+        res.json({ result: response.response.text() });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/full-audit', async (req, res) => {
+    try {
+        const { apiKey, docs, ktjRulesText } = req.body;
+        if (!apiKey) return res.status(400).json({ error: 'Не указан API-ключ Gemini' });
+
+        const ai = new GoogleGenerativeAI(apiKey);
+        const model = ai.getGenerativeModel({ 
+            model: 'gemini-1.5-pro',
+            generationConfig: { responseMimeType: "application/json" }
+        });
+
+        const systemPrompt = `
+Ты — главный эксперт по аудиту закупочной документации АО «НК «КТЖ».
+Проведи глубокий аудит по чек-листу пунктов 6.1–6.15 и верни ответ строго в формате JSON массива объектов (id, title, status ["PASSED", "FAILED", "SKIPPED"], comment, recommendation).
+
+Правила КТЖ: ${ktjRulesText || 'Базовые правила КТЖ'}
 
 ДОКУМЕНТЫ:
 ${typeof docs === 'string' ? docs : JSON.stringify(docs)}
         `;
 
-        const response = await model.generateContent(prompt);
-        return res.json({ result: response.response.text() });
+        const response = await model.generateContent(systemPrompt);
+        res.json(JSON.parse(response.response.text()));
     } catch (e) {
-        console.error("Error in pre-check:", e);
-        return res.status(500).json({ error: 'Ошибка сервера: ' + e.message });
+        res.status(500).json({ error: e.message });
     }
 });
+
+app.get('*', (req, res) => {
+    const filePath = path.join(__dirname, 'public', 'index.html');
+    res.sendFile(filePath, (err) => {
+        if (err) {
+            res.status(500).send("Ошибка: Файл public/index.html не найден.");
+        }
+    });
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server is running on port ${PORT}`);
+});
+
+module.exports = app;
