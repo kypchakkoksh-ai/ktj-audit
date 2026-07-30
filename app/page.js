@@ -214,6 +214,33 @@ async function callAudit(system, userContent, maxTokens) {
   }
 }
 
+function sleep(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
+
+function isTransientError(err) {
+  const msg = (err?.message || "").toLowerCase();
+  return msg.includes("overloaded") || msg.includes("high demand") || msg.includes("unavailable") ||
+         msg.includes("try again") || msg.includes("503") || msg.includes("429") || msg.includes("rate limit") || msg.includes("quota");
+}
+
+async function callAuditWithRetry(system, userContent, maxTokens, onRetry, retries = 2) {
+  let lastErr;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await callAudit(system, userContent, maxTokens);
+    } catch (err) {
+      lastErr = err;
+      if (attempt < retries && isTransientError(err)) {
+        const waitMs = 3000 * (attempt + 1); // 3с, затем 6с
+        onRetry?.(waitMs, attempt + 1, retries);
+        await sleep(waitMs);
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastErr;
+}
+
 function DropZone({ id, label, hint, onFiles, mini, multiple, iconChar = "\uD83D\uDCC4" }) {
   const inputRef = useRef(null);
   const [drag, setDrag] = useState(false);
@@ -368,7 +395,9 @@ export default function Page() {
       setStatusTxt("Проверяю общие нарушения и нормативную сверку…");
       let findingsResult;
       try {
-        findingsResult = await callAudit(FINDINGS_SYSTEM, contextBlock, 3500);
+        findingsResult = await callAuditWithRetry(FINDINGS_SYSTEM, contextBlock, 3500, (waitMs, attempt, total) => {
+          setStatusTxt(`Модель перегружена, повтор ${attempt}/${total} через ${Math.round(waitMs / 1000)}с…`);
+        });
       } catch (err) {
         softWarnings.push(`Не удалось получить общее резюме: ${err.message}`);
         findingsResult = { verdict: "warn", verdict_title: "Резюме недоступно", summary: "", risk_counts: { critical: 0, medium: 0, low: 0 }, findings: [], missing_refs: [] };
@@ -378,7 +407,9 @@ export default function Page() {
       setStatusTxt("Прохожу постатейный чек-лист…");
       let fullChecklist = [];
       try {
-        const checklistResult = await callAudit(checklistSystem(), contextBlock, 8192);
+        const checklistResult = await callAuditWithRetry(checklistSystem(), contextBlock, 8192, (waitMs, attempt, total) => {
+          setStatusTxt(`Модель перегружена, повтор ${attempt}/${total} через ${Math.round(waitMs / 1000)}с…`);
+        });
         fullChecklist = checklistResult
           .map((r) => {
             const meta = CHECKLIST_INDEX[r.id];
