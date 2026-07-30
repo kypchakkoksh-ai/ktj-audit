@@ -33,7 +33,7 @@ const KB = `Ниже — краткая нормативная база. Опи�
 === ДОПОЛНИТЕЛЬНЫЕ ДОКУМЕНТЫ (если приложены) ===
 ГОСТ/СТ РК/ТР ТС и иные нормативные документы, приложенные пользователем, используй при оценке пунктов о соответствии ссылок и терминов действующим стандартам.`;
 
-const FINDINGS_SYSTEM = `Ты — специализированный эксперт-аналитик по аудиту технической спецификации (ТС) в сфере закупок ТРУ для АО «НК «Қазақстан темір жолы» в рамках группы АО «Самрук-Қазына».
+const FINDINGS_SYSTEM = `Ты — специализированный эксперт-аналитик по аудиту технической спецификации (ТС) в сфере закупок ТРУ для АО «НК «Қазақстан темір жолы» в рамках группы АО «Самрук-Қазына». Работай тщательно и дотошно: цель — найти реальные нарушения, а не подтвердить, что всё в порядке. Если ТС на двух языках — обязательно построчно сверь разделы между версиями, а не оценивай по общему впечатлению; расхождение в цифрах, сроках, перечнях или объёме требований между русской и казахской версией — всегда нарушение.
 
 Приоритет норм при коллизиях: Закон РК > Порядок Самрук-Қазына > Правила КТЖ > чек-лист. Нарушение законодательства РК или Порядка Самрук-Қазына — всегда КРИТИЧЕСКИЙ риск.
 
@@ -107,19 +107,24 @@ const CHECKLIST_GROUPS = [
 const CHECKLIST_INDEX = {};
 CHECKLIST_GROUPS.forEach((g) => g.items.forEach((it) => { CHECKLIST_INDEX[it.id] = { ...it, section: g.section }; }));
 
-function checklistSystem() {
-  const itemsText = CHECKLIST_GROUPS.map((g) => `## ${g.section}\n` + g.items.map((it) => `${it.id}) ${it.text}`).join("\n")).join("\n\n");
-  return `Ты — эксперт-аналитик по аудиту технической спецификации (ТС) закупок АО «НК «ҚТЖ» / АО «Самрук-Қазына».
+function checklistSystemForGroup(group) {
+  const itemsText = group.items.map((it) => `${it.id}) ${it.text}`).join("\n");
+  const isB8Group = group.items.some((it) => it.id === "B8");
+  const b8Method = isB8Group ? `
+
+=== МЕТОДОЛОГИЯ ДЛЯ B8 (идентичность рус/каз текста) ===
+Не давай оценку по общему впечатлению. Пройди текст ТС ПОСЛЕДОВАТЕЛЬНО, раздел за разделом (описание ТРУ, функциональные характеристики, технические характеристики, эксплуатационные характеристики, качественные характеристики, требования к поставщику, сроки, объёмы, ссылки на стандарты) и для каждого раздела сверь смысл, цифры, сроки, единицы измерения и перечни между русской и казахской версией по отдельности. Любое расхождение в цифрах, сроках, перечнях пунктов, названиях стандартов или объёме требований между версиями — это status="fail", даже если общий смысл текста кажется похожим. Совпадение по объёму текста или структуре разделов НЕ означает идентичность содержания — сравнивай именно содержание. Если хотя бы одно расхождение найдено — status="fail" и в recommendation укажи точное место (раздел/пункт) и в чём разница между версиями, плюс как это исправить.` : "";
+  return `Ты — эксперт-аналитик по аудиту технической спецификации (ТС) закупок АО «НК «ҚТЖ» / АО «Самрук-Қазына». Работай тщательно и дотошно — не давай "pass" по умолчанию, если не проверил пункт по существу на основе присланного текста.
 
 ${KB}
+${b8Method}
 
 === ЗАДАЧА ===
-Оцени присланные документы по каждому пункту чек-листа:
+Оцени присланные документы СТРОГО по следующим пунктам чек-листа (и только по ним), внимательно перечитав относящиеся к каждому пункту части документов перед вынесением статуса:
 ${itemsText}
 
 Правила для recommendation:
-- Если status="fail" — recommendation должен быть КОНКРЕТНОЙ рекомендуемой редакцией: что именно исправить в тексте ТС и как это должно быть сформулировано правильно (не общий совет вида «уточните формулировку», а сам предлагаемый текст или конкретное действие). Максимум 20 слов.
-- Пункт B8 (идентичность рус/каз текста) — если status="fail", ОБЯЗАТЕЛЬНО укажи, в каком именно месте/разделе/фразе ТС есть расхождение между русской и казахской версией (например: «в п.3.2 — рус. версия указывает срок 30 дней, каз. версия — 45 дней»), и предложи, какая формулировка должна быть в обеих версиях. Не пиши общее «тексты расходятся» без указания конкретного места.
+- Если status="fail" — recommendation должен быть КОНКРЕТНОЙ рекомендуемой редакцией: что именно исправить в тексте ТС и как это должно быть сформулировано правильно (не общий совет вида «уточните формулировку», а сам предлагаемый текст или конкретное действие). Максимум 25 слов.
 - Пункт A3 — если в документах нет прямого указания, что закуп у ОТП, оцени доступную часть требования (совпадение срока поставки в ТС и ПЗ) и укажи в recommendation, что статус ОТП не установлен, если это влияет на оценку.
 - Если status="info" — recommendation описывает, что именно нужно уточнить или догрузить, максимум 15 слов.
 - Если status="pass" — recommendation — пустая строка.
@@ -128,7 +133,7 @@ ${itemsText}
 [
   {"id": "<id>", "status": "pass"|"fail"|"info", "recommendation": "<см. правила выше>"}
 ]
-Верни ровно один объект на каждый id из списка.`;
+Верни ровно один объект на каждый id из списка, в том же порядке.`;
 }
 
 function levelClass(level) { return level === "crit" ? "crit" : level === "med" ? "med" : "low"; }
@@ -398,9 +403,11 @@ export default function Page() {
     setReportLabel(label);
     const contextBlock = buildContextBlock();
     const softWarnings = [];
+    const totalSteps = 1 + CHECKLIST_GROUPS.length;
+    let stepsDone = 0;
 
     try {
-      setStatusTxt("Проверяю общие нарушения и нормативную сверку…");
+      setStatusTxt(`Проверяю блок 1 из ${totalSteps}: общие нарушения и нормативная сверка…`);
       let findingsResult;
       try {
         findingsResult = await callAuditWithRetry(FINDINGS_SYSTEM, contextBlock, 3500, (waitMs, attempt, total) => {
@@ -410,25 +417,27 @@ export default function Page() {
         softWarnings.push(`Не удалось получить общее резюме: ${err.message}`);
         findingsResult = { verdict: "warn", verdict_title: "Резюме недоступно", summary: "", risk_counts: { critical: 0, medium: 0, low: 0 }, findings: [], missing_refs: [] };
       }
-      setProgress(50);
+      stepsDone++; setProgress(Math.round((stepsDone / totalSteps) * 100));
 
-      setStatusTxt("Прохожу постатейный чек-лист…");
-      let fullChecklist = [];
-      try {
-        const checklistResult = await callAuditWithRetry(checklistSystem(), contextBlock, 8192, (waitMs, attempt, total) => {
-          setStatusTxt(`Модель перегружена, повтор ${attempt}/${total} через ${Math.round(waitMs / 1000)}с…`);
-        });
-        fullChecklist = checklistResult
-          .map((r) => {
+      const fullChecklist = [];
+      for (const group of CHECKLIST_GROUPS) {
+        setStatusTxt(`Проверяю блок ${stepsDone + 1} из ${totalSteps}: ${group.section}…`);
+        try {
+          const groupResult = await callAuditWithRetry(checklistSystemForGroup(group), contextBlock, 3000, (waitMs, attempt, total) => {
+            setStatusTxt(`Модель перегружена (блок «${group.section}»), повтор ${attempt}/${total} через ${Math.round(waitMs / 1000)}с…`);
+          });
+          groupResult.forEach((r) => {
             const meta = CHECKLIST_INDEX[r.id];
-            return meta ? { ...meta, status: r.status, recommendation: r.recommendation || "" } : null;
-          })
-          .filter(Boolean);
-      } catch (err) {
-        softWarnings.push(`Не удалось получить чек-лист: ${err.message}. Запустите проверку повторно.`);
-        fullChecklist = CHECKLIST_GROUPS.flatMap((g) => g.items.map((it) => ({ ...it, section: g.section, status: "info", recommendation: "Не удалось получить ответ модели — запустите проверку заново." })));
+            if (meta) fullChecklist.push({ ...meta, status: r.status, recommendation: r.recommendation || "" });
+          });
+        } catch (err) {
+          softWarnings.push(`Блок «${group.section}» не удалось проверить: ${err.message}. Запустите проверку повторно.`);
+          group.items.forEach((it) => {
+            fullChecklist.push({ ...it, section: group.section, status: "info", recommendation: "Не удалось получить ответ модели для этого блока — запустите проверку заново." });
+          });
+        }
+        stepsDone++; setProgress(Math.round((stepsDone / totalSteps) * 100));
       }
-      setProgress(100);
 
       const combined = { ...findingsResult, checklist: fullChecklist, soft_warnings: softWarnings };
       setResult(combined);
