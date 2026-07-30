@@ -1,27 +1,17 @@
 {
-  "name": "ktz-ts-audit",
-  "version": "0.1.0",
+  "name": "ts-audit-ktz",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "start": "next start"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.21.0",
-    "googleapis": "^144.0.0",
-    "lucide-react": "^0.454.0",
-    "next": "14.2.15",
+    "next": "14.2.5",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
-  },
-  "devDependencies": {
-    "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "postcss": "^8",
-    "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "react-dom": "^18.3.1",
+    "mammoth": "^1.7.2",
+    "xlsx": "^0.18.5"
   }
 }
