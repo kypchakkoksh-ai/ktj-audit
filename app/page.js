@@ -141,6 +141,57 @@ async function extractDocOrTxt(file) {
   return (await file.text()).trim();
 }
 
+function repairTruncatedJson(text) {
+  // Пытается «долечить» JSON, обрезанный посередине (например, из-за лимита токенов):
+  // отслеживает глубину скобок вне строк и обрезает до последней полностью
+  // закрытой позиции на верхнем уровне, затем сама достраивает недостающие скобки.
+  const isArray = text.trim().startsWith("[");
+  const isObject = text.trim().startsWith("{");
+  if (!isArray && !isObject) return null;
+
+  let depth = 0;
+  let inStr = false;
+  let esc = false;
+  let lastSafeIdx = -1;
+  const stack = [];
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inStr) {
+      if (esc) { esc = false; }
+      else if (c === "\\") { esc = true; }
+      else if (c === '"') { inStr = false; }
+      continue;
+    }
+    if (c === '"') { inStr = true; continue; }
+    if (c === "{" || c === "[") { stack.push(c); depth++; }
+    else if (c === "}" || c === "]") {
+      stack.pop(); depth--;
+      if (depth === 1 && (isArray || isObject)) lastSafeIdx = i; // конец одного элемента/поля верхнего уровня
+      if (depth === 0) lastSafeIdx = i; // весь объект/массив закрылся штатно
+    }
+    else if (c === "," && depth === 1) {
+      lastSafeIdx = i - 1 >= 0 ? i - 1 : lastSafeIdx; // запятая после последнего целого элемента
+    }
+  }
+  if (lastSafeIdx < 0) return null;
+  let truncated = text.slice(0, lastSafeIdx + 1);
+  // пересчитываем стек скобок ровно до точки обрезки, чтобы достроить закрытие правильно
+  const st = []; let s2 = false, e2 = false;
+  for (let i = 0; i <= lastSafeIdx; i++) {
+    const c = text[i];
+    if (s2) { if (e2) e2 = false; else if (c === "\\") e2 = true; else if (c === '"') s2 = false; continue; }
+    if (c === '"') { s2 = true; continue; }
+    if (c === "{" || c === "[") st.push(c);
+    else if (c === "}" || c === "]") st.pop();
+  }
+  const closers = st.reverse().map((c) => (c === "{" ? "}" : "]")).join("");
+  try {
+    return JSON.parse(truncated + closers);
+  } catch {
+    return null;
+  }
+}
+
 async function callAudit(system, userContent, maxTokens) {
   const resp = await fetch("/api/audit", {
     method: "POST",
@@ -155,7 +206,11 @@ async function callAudit(system, userContent, maxTokens) {
   try {
     return JSON.parse(clean);
   } catch {
-    throw new Error("Не удалось разобрать ответ модели как JSON.");
+    const repaired = repairTruncatedJson(clean);
+    if (repaired !== null) return repaired;
+    const reasonNote = data.finish_reason ? ` Причина остановки: ${data.finish_reason}.` : "";
+    const snippet = clean.length > 220 ? `${clean.slice(0, 120)} … ${clean.slice(-100)}` : clean;
+    throw new Error(`Не удалось разобрать ответ модели как JSON.${reasonNote} Фрагмент ответа: «${snippet}»`);
   }
 }
 
@@ -313,7 +368,7 @@ export default function Page() {
       setStatusTxt("Проверяю общие нарушения и нормативную сверку…");
       let findingsResult;
       try {
-        findingsResult = await callAudit(FINDINGS_SYSTEM, contextBlock, 2048);
+        findingsResult = await callAudit(FINDINGS_SYSTEM, contextBlock, 3500);
       } catch (err) {
         softWarnings.push(`Не удалось получить общее резюме: ${err.message}`);
         findingsResult = { verdict: "warn", verdict_title: "Резюме недоступно", summary: "", risk_counts: { critical: 0, medium: 0, low: 0 }, findings: [], missing_refs: [] };
@@ -323,7 +378,7 @@ export default function Page() {
       setStatusTxt("Прохожу постатейный чек-лист…");
       let fullChecklist = [];
       try {
-        const checklistResult = await callAudit(checklistSystem(), contextBlock, 4096);
+        const checklistResult = await callAudit(checklistSystem(), contextBlock, 8192);
         fullChecklist = checklistResult
           .map((r) => {
             const meta = CHECKLIST_INDEX[r.id];
