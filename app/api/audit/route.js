@@ -70,9 +70,12 @@ export async function POST(req) {
       );
     }
     if (finishReason === "MAX_TOKENS") {
+      // Отдаём то, что есть, но фронтенд поймёт по неполному JSON и покажет понятную ошибку.
       console.warn("Gemini: ответ обрезан по maxOutputTokens.");
     }
 
+    // Приводим ответ к тому же виду, который ожидает фронтенд ({ content: [{ text }] }),
+    // чтобы не переписывать логику разбора ответа на клиенте.
     return Response.json({ content: [{ text }], finish_reason: finishReason });
   } catch (err) {
     return Response.json({ error: `Сбой запроса к Gemini API: ${err.message}` }, { status: 502 });
