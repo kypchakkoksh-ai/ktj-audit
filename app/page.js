@@ -5,6 +5,12 @@ import { useEffect, useRef, useState } from "react";
 /* ============ knowledge base ============ */
 const KB = `Ниже — краткая нормативная база. Опирайся только на неё и на текст присланных пользователем документов; не выдумывай нормы.
 
+=== ОБЩИЕ ПРАВИЛА ТОЧНОСТИ (обязательны для всех пунктов) ===
+1. Любое несоответствие описывай КОНКРЕТНО: указывай, какой именно раздел/пункт/строка ТС не совпадает с каким именно разделом/пунктом/строкой источника сравнения (Плана закупок, ПЗ, ГОСТа, казахской версии и т.д.), и в чём именно разница (какие значения расходятся). Формулировки вида «данные не совпадают» или «есть противоречие» без указания конкретного места и сути расхождения НЕДОПУСТИМЫ.
+   Пример хорошей формулировки: «В ТС п.2.3 указана мощность 5 кВт, в Плане закупок в позиции по коду ЕНСТРУ ХХХХ — 7 кВт».
+   Пример плохой формулировки (так писать нельзя): «Данные плана закупок не совпадают с ТС».
+2. Если в ТС предоставлены обе языковые версии (рус и каз) и по пункту B8 установлено, что тексты идентичны — все остальные содержательные пункты чек-листа (кроме B8) оценивай по РУССКОЙ версии как основной. Если версии расходятся — по каждому содержательному пункту используй ту версию, где требование сформулировано, и отдельно отметь расхождение по B8.
+
 === ПОРЯДОК САМРУК-ҚАЗЫНА (ключевые нормы) ===
 — Статья 35 п.6: в тендерной документации (и, соответственно, в ТС) не допускается указание товарных знаков, знаков обслуживания, фирменных наименований, патентов, полезных моделей, промышленных образцов, наименования места происхождения товара и наименования производителя, если это указывает на принадлежность товара/работы/услуги отдельным поставщикам — за исключением: (а) закупок для доукомплектования/дооснащения/унификации или совместимости с имеющимся оборудованием, сервисного обслуживания и ремонта; (б) если иное предусмотрено закупочной категорийной стратегией; (в) исполнения обязательств по договору с нерезидентом РК, где такие указания предусмотрены самим договором; (г) отдельных случаев для производителей нефтепродуктов.
 — Приложение №5 п.2: ТС должна содержать: 1) указание на национальные стандарты РК (при отсутствии — межгосударственные стандарты; при отсутствии и таковых — иные документы по стандартизации, международные стандарты или стандарты иностранного государства); 2) указание на нормативно-техническую документацию (при необходимости); 3) утверждённую проектно-сметную документацию (для работ, требующих ПСД). Если в ТС есть ссылка на технические условия/стандарты/НТД, не зарегистрированные в РК — Заказчик обязан включить эти документы в тендерную документацию либо предоставить их по запросу потенциальных поставщиков в течение 3 (трёх) календарных дней.
@@ -49,7 +55,7 @@ ${KB}
   "summary": "2-3 предложения общего вывода",
   "risk_counts": {"critical": <число>, "medium": <число>, "low": <число>},
   "findings": [
-    {"level": "crit"|"med"|"low", "fragment": "цитата до 15 слов", "norm": "нарушенная норма", "issue": "суть нарушения", "recommendation": "рекомендуемая формулировка"}
+    {"level": "crit"|"med"|"low", "fragment": "цитата до 15 слов", "norm": "нарушенная норма", "issue": "суть нарушения с указанием конкретного места (пункт/раздел ТС, строка Плана закупок, статья ГОСТа и т.п.) — не общая фраза", "recommendation": "конкретная рекомендуемая редакция или значение, не общий совет"}
   ],
   "missing_refs": ["документ/ГОСТ/статья, упомянутый в ТС, но не покрытый базой — до 8 штук"]
 }
@@ -124,7 +130,7 @@ ${b8Method}
 ${itemsText}
 
 Правила для recommendation:
-- Если status="fail" — recommendation должен быть КОНКРЕТНОЙ рекомендуемой редакцией: что именно исправить в тексте ТС и как это должно быть сформулировано правильно (не общий совет вида «уточните формулировку», а сам предлагаемый текст или конкретное действие). Максимум 25 слов.
+- Если status="fail" — recommendation должен быть КОНКРЕТНОЙ рекомендуемой редакцией: указывай конкретное место расхождения (пункт/раздел ТС, строку/позицию Плана закупок, номер статьи ГОСТа и т.п.) и как это должно быть сформулировано правильно (не общий совет вида «уточните формулировку», а сам предлагаемый текст, конкретное значение или конкретное действие). Максимум 25 слов.
 - Пункт A3 — если в документах нет прямого указания, что закуп у ОТП, оцени доступную часть требования (совпадение срока поставки в ТС и ПЗ) и укажи в recommendation, что статус ОТП не установлен, если это влияет на оценку.
 - Если status="info" — recommendation описывает, что именно нужно уточнить или догрузить, максимум 15 слов.
 - Если status="pass" — recommendation — пустая строка.
@@ -301,6 +307,8 @@ export default function Page() {
   const [step, setStep] = useState(1);
   const [history, setHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [feedbackHistory, setFeedbackHistory] = useState([]);
+  const [feedbackInput, setFeedbackInput] = useState("");
 
   useEffect(() => {
     try {
@@ -376,7 +384,7 @@ export default function Page() {
     setExtraFiles(next);
   }
 
-  function buildContextBlock() {
+  function buildContextBlock(feedbackList) {
     let block = "";
     if (tsRu.text) block += `Файл ТС (русский язык): ${tsRu.name}\n\nТекст ТС на русском:\n\n${tsRu.text.slice(0, 60000)}\n\n`;
     if (tsKz.text) block += `Файл ТС (қазақ тілі): ${tsKz.name}\n\nТекст ТС на казахском:\n\n${tsKz.text.slice(0, 60000)}\n\n`;
@@ -393,15 +401,20 @@ export default function Page() {
       block += `---\nДополнительные нормативные документы:\n\n`;
       extraFiles.forEach((f) => { block += `## ${f.name}\n${f.text.slice(0, 10000)}\n\n`; });
     }
+    if (feedbackList && feedbackList.length) {
+      block += `---\n=== ЗАМЕЧАНИЯ ПОЛЬЗОВАТЕЛЯ ПО ПРЕДЫДУЩЕЙ ПРОВЕРКЕ ===\nПользователь указал, что предыдущий отчёт содержал неточности. Обязательно перепроверь именно эти моменты внимательно, перечитав относящиеся части ТС заново, прежде чем выносить статус по соответствующим пунктам:\n`;
+      feedbackList.forEach((f, i) => { block += `${i + 1}. ${f.text}\n`; });
+      block += `Если замечание пользователя подтверждается текстом документов — обязательно отрази это в findings и/или в соответствующем пункте чек-листа (status="fail" с конкретной рекомендацией). Если замечание не подтверждается — объясни в summary, почему.\n\n`;
+    }
     return block;
   }
 
-  async function runAudit() {
+  async function runAudit(feedbackList) {
     if (!tsRu.text && !tsKz.text) return;
     setErrMsg(""); setResult(null); setLoading(true); setStep(2); setProgress(0);
     const label = [tsRu.name, tsKz.name].filter(Boolean).join(" / ") || "ТС";
     setReportLabel(label);
-    const contextBlock = buildContextBlock();
+    const contextBlock = buildContextBlock(feedbackList);
     const softWarnings = [];
     const totalSteps = 1 + CHECKLIST_GROUPS.length;
     let stepsDone = 0;
@@ -456,7 +469,17 @@ export default function Page() {
     setTsRu({ text: "", name: "" }); setTsKz({ text: "", name: "" });
     setPlan({ text: "", name: "" }); setSupplier({ text: "", name: "" });
     setExtraFiles([]); setEnstruCode(""); setEnstruName("");
+    setFeedbackHistory([]); setFeedbackInput("");
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function submitFeedback() {
+    const text = feedbackInput.trim();
+    if (!text || loading) return;
+    const newHistory = [...feedbackHistory, { text, date: new Date().toISOString() }];
+    setFeedbackHistory(newHistory);
+    setFeedbackInput("");
+    await runAudit(newHistory);
   }
 
   function downloadReport(r, label) {
@@ -576,7 +599,7 @@ export default function Page() {
 
       <div className="card">
         <div className="runbar">
-          <button className="primary" disabled={runDisabled} onClick={runAudit}>Запустить аудит</button>
+          <button className="primary" disabled={runDisabled} onClick={() => runAudit()}>Запустить аудит</button>
           <div className={`spinner ${loading ? "on" : ""}`} />
           <span className="status-txt">{statusTxt}</span>
         </div>
@@ -601,6 +624,47 @@ export default function Page() {
       )}
 
       {result && <Results r={result} label={reportLabel} onDownload={() => downloadReport(result, reportLabel)} onNew={newAudit} />}
+
+      {result && (
+        <div className="card">
+          <h2>Уточнить результат</h2>
+          <p className="sub" style={{ margin: "0 0 14px" }}>
+            Если видите неточность в отчёте — например, реальное расхождение между русской и казахской версией ТС,
+            которое агент не отметил, или неверный вывод по какому-то пункту — опишите это ниже. Агент перечитает
+            документы заново с учётом вашего замечания и обновит отчёт.
+          </p>
+          {feedbackHistory.length > 0 && (
+            <div style={{ marginBottom: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+              {feedbackHistory.map((f, i) => (
+                <div key={i} style={{ background: "#F5F6F5", border: "1px solid var(--line)", borderRadius: 8, padding: "10px 12px", fontSize: 13.5 }}>
+                  <div style={{ fontSize: 11.5, color: "var(--ink-faint)", marginBottom: 4 }}>
+                    Вы · {new Date(f.date).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}
+                  </div>
+                  {f.text}
+                </div>
+              ))}
+            </div>
+          )}
+          <textarea
+            value={feedbackInput}
+            onChange={(e) => setFeedbackInput(e.target.value)}
+            placeholder="Например: казахская версия ТС в разделе «Технические характеристики» указывает мощность 5 кВт, а русская — 7 кВт — это расхождение, агент его не отметил"
+            rows={3}
+            style={{
+              width: "100%", padding: "10px 12px", border: "1px solid var(--line-strong)", borderRadius: 8,
+              fontFamily: "'IBM Plex Sans',sans-serif", fontSize: 14, color: "var(--ink)", resize: "vertical",
+            }}
+          />
+          <div className="runbar" style={{ marginTop: 12 }}>
+            <button className="primary" disabled={!feedbackInput.trim() || loading} onClick={submitFeedback}>
+              Уточнить и повторить аудит
+            </button>
+            <div className={`spinner ${loading ? "on" : ""}`} />
+            <span className="status-txt">{statusTxt}</span>
+          </div>
+          {errMsg && <div className="err">{errMsg}</div>}
+        </div>
+      )}
 
       <p className="note">Отчёт носит справочный характер и не заменяет заключение эксперта по закупкам. Код ЕНСТРУ сверяется с данными, которые вы вносите вручную с enstru.kz — сайт не имеет автоматического доступа к порталу.</p>
     </div>
