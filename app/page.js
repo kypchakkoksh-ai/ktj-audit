@@ -112,13 +112,15 @@ const CHECKLIST_GROUPS = [
     { id: "B5", text: "Указано точное место поставки/выполнения работ/оказания услуг, без общих формулировок вроде «Акмолинский регион» (объёмы и графики поставки не проверяются — в ТС они не указываются)." },
     { id: "B8", text: "Идентичность текста ТС между русским и казахским языками." },
   ]},
-  { section: "Смысл, функциональные и технические характеристики", items: [
+  { section: "Смысл и функциональные характеристики", items: [
     { id: "C1", text: "Отсутствие противоречий смысла между описанием и характеристиками ТРУ." },
     { id: "C2", text: "Чётко указаны задачи, которые должна выполнять ТРУ." },
     { id: "C3", text: "Функции описаны измеримыми показателями (напр. время нагрева, а не «быстро нагревается»)." },
     { id: "C4", text: "Указаны перечень и условия проведения работ/услуг." },
     { id: "C5", text: "Физические, конструктивные и технологические параметры измеримы и проверяемы." },
     { id: "C6", text: "Установлены конкретные параметры (размер, масса, мощность, производительность, материалы и т.п.)." },
+  ]},
+  { section: "Эксплуатационные и качественные характеристики", items: [
     { id: "C7", text: "Указано, как будет использоваться ТРУ." },
     { id: "C8", text: "Определены условия эксплуатации (температура, влажность, механические нагрузки)." },
     { id: "C9", text: "Указаны требования по обслуживанию и ремонту." },
@@ -559,13 +561,38 @@ export default function Page() {
       for (const group of CHECKLIST_GROUPS) {
         setStatusTxt(`Проверяю блок ${stepsDone + 1} из ${totalSteps}: ${group.section}…`);
         try {
-          const groupResult = await callAuditWithRetry(checklistSystemForGroup(group), contextBlock, 3000, (waitMs, attempt, total) => {
+          let groupResult = await callAuditWithRetry(checklistSystemForGroup(group), contextBlock, 4096, (waitMs, attempt, total) => {
             setStatusTxt(`Модель перегружена (блок «${group.section}»), повтор ${attempt}/${total} через ${Math.round(waitMs / 1000)}с…`);
           });
+          let receivedIds = new Set(groupResult.map((r) => r.id));
+          let missingItems = group.items.filter((it) => !receivedIds.has(it.id));
+
+          // Ответ пришёл валидным JSON, но неполным (обычно из-за обрезки по лимиту токенов) — пробуем ещё раз именно эти пункты.
+          if (missingItems.length > 0) {
+            setStatusTxt(`Блок «${group.section}»: не хватает ${missingItems.length} пункт(ов), повторяю запрос…`);
+            try {
+              const retryGroup = { section: group.section, items: missingItems };
+              const retryResult = await callAuditWithRetry(checklistSystemForGroup(retryGroup), contextBlock, 4096, (waitMs, attempt, total) => {
+                setStatusTxt(`Модель перегружена (блок «${group.section}»), повтор ${attempt}/${total} через ${Math.round(waitMs / 1000)}с…`);
+              });
+              groupResult = [...groupResult, ...retryResult];
+              receivedIds = new Set(groupResult.map((r) => r.id));
+              missingItems = group.items.filter((it) => !receivedIds.has(it.id));
+            } catch {
+              // если и повтор не помог — эти пункты попадут в missingItems ниже как info
+            }
+          }
+
           groupResult.forEach((r) => {
             const meta = CHECKLIST_INDEX[r.id];
             if (meta) fullChecklist.push({ ...meta, status: r.status, recommendation: r.recommendation || "" });
           });
+          if (missingItems.length > 0) {
+            softWarnings.push(`Блок «${group.section}»: модель не вернула ответ по ${missingItems.length} пункт(ам) (${missingItems.map((it) => it.id).join(", ")}) даже после повтора.`);
+            missingItems.forEach((it) => {
+              fullChecklist.push({ ...it, section: group.section, status: "info", recommendation: "Не удалось получить ответ модели по этому пункту — запустите проверку заново." });
+            });
+          }
         } catch (err) {
           softWarnings.push(`Блок «${group.section}» не удалось проверить: ${err.message}. Запустите проверку повторно.`);
           group.items.forEach((it) => {
